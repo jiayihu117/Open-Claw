@@ -1,0 +1,28 @@
+# Logs
+logs/
+*.log
+
+# PID files
+*.pid
+
+# OpenClaw state
+.openclaw/workspace-state.json
+
+# Node modules (skills should be self-contained)
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Build outputs
+dist/
+build/
