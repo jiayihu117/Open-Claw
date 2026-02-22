@@ -1,0 +1,23 @@
+[Unit]
+Description=OpenClaw Codespace Keepalive Service
+After=network.target
+
+[Service]
+Type=simple
+User=codespace
+WorkingDirectory=/home/codespace/.openclaw/workspace
+ExecStart=/usr/bin/node /home/codespace/.openclaw/workspace/scripts/keepalive-service.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/home/codespace/.openclaw/workspace/logs/keepalive-service.stdout.log
+StandardError=append:/home/codespace/.openclaw/workspace/logs/keepalive-service.stderr.log
+
+# 环境变量
+Environment=NODE_ENV=production
+
+# 防止服务被快速终止
+TimeoutStopSec=30
+KillMode=mixed
+
+[Install]
+WantedBy=default.target
