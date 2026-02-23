@@ -53,9 +53,10 @@ function pingGitHub() {
 }
 
 function pingCodespace() {
-    // 访问 Codespace 的端口来保持活跃
+    // 访问 Codespace 的多个端口来保持活跃
     return new Promise((resolve) => {
-        exec('curl -s -o /dev/null -w "%{http_code}" http://localhost:18789 || echo "000"', (error, stdout) => {
+        // 尝试多个可能的端口
+        exec('curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://localhost:18789 || curl -s -o /dev/null -w "%{http_code}" --connect-timeout 2 http://localhost:8080 || echo "SKIP"', (error, stdout) => {
             resolve(stdout.trim());
         });
     });
