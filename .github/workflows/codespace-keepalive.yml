@@ -9,7 +9,8 @@ on:
     branches: [main]
 
 permissions:
-  contents: read
+  contents: write
+  actions: write
 
 jobs:
   keepalive:
@@ -17,24 +18,52 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Keep Codespace Alive
         run: |
           echo "🔥 Keeping Codespace alive at $(date)"
           echo "Repository: ${{ github.repository }}"
           echo "Run ID: ${{ github.run_id }}"
+          echo "Run Number: ${{ github.run_number }}"
           
-          # Ping GitHub API
+          # Ping multiple endpoints
+          echo "Pinging GitHub API..."
           curl -s -o /dev/null -w "GitHub API: %{http_code}\n" "https://api.github.com"
           
-          # Touch a file to create activity
-          echo "Keepalive at $(date)" >> .keepalive-touch
+          echo "Pinging Cloudflare..."
+          curl -s -o /dev/null -w "Cloudflare: %{http_code}\n" "https://cloudflare.com"
+          
+          # Create activity file with timestamp
+          cat > .keepalive-touch << EOF
+          {
+            "timestamp": "$(date -Iseconds)",
+            "run_id": "${{ github.run_id }}",
+            "run_number": ${{ github.run_number }},
+            "actor": "${{ github.actor }}",
+            "repository": "${{ github.repository }}"
+          }
+          EOF
           
           # Commit and push to create activity
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .keepalive-touch || true
-          git commit -m "chore: keepalive ping [skip ci]" || true
-          git push || true
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: keepalive ping #${{ github.run_number }} [skip ci]" || true
+            git push || true
+            echo "✅ Activity committed and pushed"
+          fi
+          
+          # List recent runs
+          echo ""
+          echo "Recent workflow runs:"
+          gh run list --limit 3 || true
           
           echo "✅ Keepalive completed"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
