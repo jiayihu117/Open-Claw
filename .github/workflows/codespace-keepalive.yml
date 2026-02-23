@@ -1,0 +1,40 @@
+name: Codespace Keepalive
+
+on:
+  schedule:
+    # 每 10 分钟运行一次，防止 Codespace 因闲置而关闭
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  keepalive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Keep Codespace Alive
+        run: |
+          echo "🔥 Keeping Codespace alive at $(date)"
+          echo "Repository: ${{ github.repository }}"
+          echo "Run ID: ${{ github.run_id }}"
+          
+          # Ping GitHub API
+          curl -s -o /dev/null -w "GitHub API: %{http_code}\n" "https://api.github.com"
+          
+          # Touch a file to create activity
+          echo "Keepalive at $(date)" >> .keepalive-touch
+          
+          # Commit and push to create activity
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .keepalive-touch || true
+          git commit -m "chore: keepalive ping [skip ci]" || true
+          git push || true
+          
+          echo "✅ Keepalive completed"
